@@ -73,6 +73,7 @@ test1=likelihood(light, z=sensor_data, z_prob=light_sensor_accuracy_rate)
 Normalization(정규화)
 위에서 정의한 likelihood 벡터는 확률 분포가 아니기 때문에 확률 분포 함수로  바꿔져야 합니다. 그래서 각 값의 합이 1이 되도록 고정된 scale factor를 곱하여 스케일을 조절해 줘야 합니다.
 변환 된 값들의 상대적인 차이는 원래의 값과 동일해야합니다.
+확률 밀도 함수는 총합이 항상 1이기 때문
 
 normalizer = 1 / (likelihood vector의 모든 원소들의 합)
 likelihood 벡터의 각각의 값에 normalizer를 곱합니다
@@ -109,11 +110,57 @@ def correct_step(likelihood, belief):
 print(correct_step(test2, belief))
 test3 = correct_step(test2, belief)
 
+
+# 이제 로봇이 복도를 따라 움직인다고 가정한다.
+"""
+로봇은 복도를 움직이고 있으며 오돔트리 센서에 노이즈가 있습니다. 센서에 노이즈가 있다면, 로봇의 실제 위치르 완벽하게 추정하기는 어렵습니다.
+
+"""
+# 로봇의 현재 위치는 1번 위치에 있습니다.
+one_step_belief = [0., 1., 0., 0., 0., 0., 0., 0., 0., 0.]
+ 
+def noisy_move(belief, distance, p_under, p_correct, p_over):
+    n = len(belief) # 맵의 길이를 n에 할당
+    output = [0] * n
+    for i in range(n):
+        output[i] = (belief[(i-distance) % n]* p_correct +
+                         belief[(i-distance-1) % n] * p_over +
+                         belief[(i-distance+1) % n] * p_under)
+    return output
+
+# 로봇은 3칸을 움직였으며 덜 움직였을 10%, 제대로 움직였을 80% 더 많이 움직였을 확률 10% 
+robot_move_belief = noisy_move(one_step_belief, 3, .1, .8, .1)
+print(robot_move_belief)
+
+"""
+이제 관측 과정과 예측 과정을 통해 얻은 두 개의 확률 밀도 함수를 조합합니다.
+이러한 조합을 Convolution(컨볼루션) 합니다. [합성곱 적분식 : 한 함수의 반전(천이)시키고 이동시켜, 값을 곱해 구간에 대해 적분 하는 것]
+Convolution(컨볼루션)을 통해 한 분포의 형태에 어떻게 다른 분포를 섞을 수 있는 지를 나타내는 새 확률 분포를 얻을 수 있게 됩니다.
+    
+"""
+def predict_step(belief, offset, kernel):
+    """Applies a convolution by sliding kernel over the belief"""
+    N = len(belief)
+    kN = len(kernel)
+    width = int((kN - 1) / 2)
+    output = [0] * N
+    for i in range(N):
+        for k in range (kN):
+            index = (i + (width-k) - offset) % N
+            output[i] += belief[index] * kernel[k]
+    return output
+
+kernel = [.1, .8, .1]
+distance = 0
+test4 = predict_step(robot_move_belief, distance, kernel)
+print(test4)
+
 # 바 그래프 설정
 x = np.arange(grid_map)
 grid = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
-#plt.bar(x, belief,width=0.4)
-plt.bar(x, test3,width=0.4)
+plt.bar(x, belief,width=0.4) # 초기 빌리프 초기 확실성
+#plt.bar(x, test3,width=0.4) # 로봇이 0번 위치에서 1번 위치로 이동했을 때
+#plt.bar(x, test4,width=0.4) # 로봇이 1번 위치에서 3칸 이동했을 때 
 plt.xticks(x, grid)
 
 # x, y축 라벨 표시 및 y축 리미트 설정 (왜 1이냐 확률 스케일 상 1이기 때문)
