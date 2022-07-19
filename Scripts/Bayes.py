@@ -55,12 +55,19 @@ sensor_env = [1,3,1,3,1,1,1,3,1,1]
 def likelihood(environment_map, z, z_prob):
     likelihood = [1] * (len(environment_map))
     for index, grid_value in enumerate(environment_map):
-        if grid_value == z:
+        if grid_value == z: # 빛이 감지 됬을 경우 센서 정확도를 곱해줌
             likelihood[index] *= z_prob
-        else:
-            likelihood[index] *= (1 - z_prob)
+        else: # 빛이 감지 되지 않은 경우 어두운 경우 (1-z_prob) 즉 센서가 오차났을 확률을 곱해준다.
+            likelihood[index] *= (1 - z_prob) 
     return likelihood
 
+# 로봇이 0번 위치에서 라이트가 있는 1번 위치로 이동했을 때 이다.
+sensor_data = 1 # 센서가 감지 됬을 때 1 안됬을때 0
+light_sensor_accuracy_rate = 0.9 # 센서의 정확도 (90)
+
+print(likelihood(light, z=sensor_data, z_prob=light_sensor_accuracy_rate))
+
+test1=likelihood(light, z=sensor_data, z_prob=light_sensor_accuracy_rate)
 
 """
 Normalization(정규화)
@@ -80,6 +87,9 @@ def normalize(inputList):
     inputListNormalized = [x * normalizer for x in inputList]
     return inputListNormalized
 
+print(normalize(test1))
+test2=normalize(test1)
+
 """
 correct step은 현재의 belief를 수정하기 위해 센서의 측정값을 사용합니다. 수학적으로 말해서,
 correct step은 현재의 belief를 likelihood function에 곱하는 것으로 구성됩니다.
@@ -96,16 +106,20 @@ def correct_step(likelihood, belief):
     return normalize(output)
 
 
+print(correct_step(test2, belief))
+test3 = correct_step(test2, belief)
+
 # 바 그래프 설정
 x = np.arange(grid_map)
 grid = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
-plt.bar(x, belief,width=0.4)
+#plt.bar(x, belief,width=0.4)
+plt.bar(x, test3,width=0.4)
 plt.xticks(x, grid)
 
 # x, y축 라벨 표시 및 y축 리미트 설정 (왜 1이냐 확률 스케일 상 1이기 때문)
 plt.xlabel('move grid')
 plt.ylabel('belif')
-plt.ylim([0, 1])
+plt.ylim([0, 0.3])
 
 # vscode에서 그래프 플롯할때 필수적인 거임
 plt.show()
