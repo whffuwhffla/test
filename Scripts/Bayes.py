@@ -159,8 +159,8 @@ print(test4)
 x = np.arange(grid_map)
 grid = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 #plt.bar(x, belief,width=0.4) # 초기 빌리프 초기 확실성
-#plt.bar(x, test3,width=0.4) # 로봇이 0번 위치에서 1번 위치로 이동했을 때
-plt.bar(x, test4,width=0.4) # 로봇이 1번 위치에서 3칸 이동했을 때 
+plt.bar(x, test3,width=0.4) # 로봇이 0번 위치에서 1번 위치로 이동했을 때
+#plt.bar(x, test4,width=0.4) # 로봇이 1번 위치에서 3칸 이동했을 때 
 plt.xticks(x, grid)
 
 # x, y축 라벨 표시 및 y축 리미트 설정 (왜 1이냐 확률 스케일 상 1이기 때문)
